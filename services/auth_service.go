@@ -225,6 +225,43 @@ func (as *AuthService) EnsureDefaultAdmin() error {
 	return nil
 }
 
+func (as *AuthService) ChangePassword(userID int, currentPassword, newPassword string) error {
+	if currentPassword == "" || newPassword == "" {
+		return fmt.Errorf("current password and new password are required")
+	}
+
+	if len(newPassword) < 6 {
+		return fmt.Errorf("new password must be at least 6 characters long")
+	}
+
+	// Get current user
+	user, err := as.GetUserByID(userID)
+	if err != nil {
+		return fmt.Errorf("user not found")
+	}
+
+	// Verify current password
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(currentPassword))
+	if err != nil {
+		return fmt.Errorf("current password is incorrect")
+	}
+
+	// Hash new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash new password: %v", err)
+	}
+
+	// Update password in database
+	query := `UPDATE users SET password = ? WHERE id = ?`
+	_, err = as.db.Exec(query, string(hashedPassword), userID)
+	if err != nil {
+		return fmt.Errorf("failed to update password: %v", err)
+	}
+
+	return nil
+}
+
 func generateSessionID() (string, error) {
 	bytes := make([]byte, 32)
 	_, err := rand.Read(bytes)

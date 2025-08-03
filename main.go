@@ -33,6 +33,7 @@ func main() {
 	feedService := services.NewFeedService(db)
 	articleService := services.NewArticleService(db)
 	authService := services.NewAuthService(db)
+	folderService := services.NewFolderService(db)
 
 	// Ensure default admin user exists
 	if err := authService.EnsureDefaultAdmin(); err != nil {
@@ -43,6 +44,7 @@ func main() {
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 	feedHandlers := handlers.NewFeedHandlers(feedService, articleService)
 	articleHandlers := handlers.NewArticleHandlers(articleService)
+	folderHandlers := handlers.NewFolderHandlers(folderService, feedService)
 
 	// Setup routes
 	r := mux.NewRouter()
@@ -69,6 +71,10 @@ func main() {
 	// Protected routes (authentication required)
 	protected := api.PathPrefix("").Subrouter()
 	protected.Use(authMiddleware.RequireAuth)
+	
+	// Protected auth routes
+	protectedAuth := protected.PathPrefix("/auth").Subrouter()
+	protectedAuth.HandleFunc("/change-password", authMiddleware.ChangePassword).Methods("POST")
 
 	// Stats
 	protected.HandleFunc("/stats", feedHandlers.GetStats).Methods("GET")
@@ -87,6 +93,13 @@ func main() {
 	protected.HandleFunc("/articles/{id:[0-9]+}/save", articleHandlers.MarkAsSaved).Methods("PUT")
 	protected.HandleFunc("/articles/mark-all-read", articleHandlers.MarkAllAsRead).Methods("POST")
 	protected.HandleFunc("/articles/search", articleHandlers.SearchArticles).Methods("GET")
+
+	// Folder/Category routes
+	protected.HandleFunc("/folders", folderHandlers.GetFolders).Methods("GET")
+	protected.HandleFunc("/folders", folderHandlers.CreateFolder).Methods("POST")
+	protected.HandleFunc("/folders/{id:[0-9]+}", folderHandlers.UpdateFolder).Methods("PUT")
+	protected.HandleFunc("/folders/{id:[0-9]+}", folderHandlers.DeleteFolder).Methods("DELETE")
+	protected.HandleFunc("/folders/move-feeds", folderHandlers.MoveFeedsToFolder).Methods("POST")
 
 	// Static files and frontend
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))

@@ -192,6 +192,46 @@ func (am *AuthMiddleware) GetCurrentUser(w http.ResponseWriter, r *http.Request)
 	})
 }
 
+func (am *AuthMiddleware) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	user := am.getCurrentUser(r)
+	if user == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Not authenticated",
+		})
+		return
+	}
+
+	var req struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	err := am.authService.ChangePassword(user.ID, req.CurrentPassword, req.NewPassword)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Password changed successfully",
+	})
+}
+
 func GetUserFromContext(r *http.Request) *models.User {
 	user, ok := r.Context().Value(UserContextKey).(*models.User)
 	if !ok {
