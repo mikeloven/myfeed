@@ -259,35 +259,9 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-content">
-            <div class="logo">📰 MyFeed</div>
-            <div class="stats" id="stats-display">Loading...</div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="sidebar">
-            <div class="add-feed-form">
-                <h3 style="margin-top: 0;">Add Feed</h3>
-                <input type="url" id="feed-url" placeholder="https://example.com/feed.xml" />
-                <button class="btn" onclick="addFeed()">Add Feed</button>
-            </div>
-
-            <div>
-                <h3>Feeds</h3>
-                <ul class="feed-list" id="feed-list">
-                    <li class="loading">Loading feeds...</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <input type="text" class="search-box" id="search-box" placeholder="Search articles..." />
-            
-            <div class="article-list" id="article-list">
-                <div class="loading">Select a feed to view articles</div>
-            </div>
+    <div id="app-content">
+        <div class="loading" style="text-align: center; padding: 40px; color: #666;">
+            Checking authentication...
         </div>
     </div>
 
@@ -317,10 +291,13 @@
                         return;
                     }
                 }
+                // If we get here, user is not authenticated
+                console.log('User not authenticated, showing login form');
+                showLoginForm();
             } catch (error) {
-                console.log('Not authenticated:', error);
+                console.log('Authentication check failed:', error);
+                showLoginForm();
             }
-            showLoginForm();
         }
 
         async function loadStats() {
@@ -539,7 +516,7 @@
         }
 
         function showLoginForm() {
-            document.body.innerHTML = `
+            document.getElementById('app-content').innerHTML = `
                 <div class="login-container">
                     <div class="login-form">
                         <h1 class="login-title">📰 MyFeed</h1>
@@ -561,7 +538,7 @@
         }
 
         function showMainApp() {
-            document.body.innerHTML = `
+            document.getElementById('app-content').innerHTML = `
                 <div class="header">
                     <div class="header-content">
                         <div class="logo">📰 MyFeed</div>
