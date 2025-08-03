@@ -49,3 +49,19 @@ type FeedStats struct {
 	UnreadArticles int `json:"unread_articles"`
 	SavedArticles  int `json:"saved_articles"`
 }
+
+type User struct {
+	ID        int       `json:"id" db:"id"`
+	Username  string    `json:"username" db:"username"`
+	Password  string    `json:"-" db:"password"` // Never return password in JSON
+	IsAdmin   bool      `json:"is_admin" db:"is_admin"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	LastLogin *time.Time `json:"last_login" db:"last_login"`
+}
+
+type Session struct {
+	ID        string    `json:"id" db:"id"`
+	UserID    int       `json:"user_id" db:"user_id"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	ExpiresAt time.Time `json:"expires_at" db:"expires_at"`
+}

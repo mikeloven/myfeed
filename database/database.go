@@ -95,6 +95,30 @@ func (db *DB) createTables() error {
 	CREATE INDEX IF NOT EXISTS idx_feeds_folder_id ON feeds(folder_id);
 	CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON folders(parent_id);
 
+	-- Users table
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		username TEXT UNIQUE NOT NULL,
+		password TEXT NOT NULL,
+		is_admin BOOLEAN DEFAULT FALSE,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		last_login DATETIME
+	);
+
+	-- Sessions table
+	CREATE TABLE IF NOT EXISTS sessions (
+		id TEXT PRIMARY KEY,
+		user_id INTEGER NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		expires_at DATETIME NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	);
+
+	-- Indexes for users and sessions
+	CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+	CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+	CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+
 	-- Insert default settings
 	INSERT OR IGNORE INTO settings (key, value) VALUES 
 		('app_title', 'MyFeed'),

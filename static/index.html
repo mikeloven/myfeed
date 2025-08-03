@@ -185,6 +185,65 @@
             margin-bottom: 20px;
             box-sizing: border-box;
         }
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+        }
+        .login-form {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logout-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .logout-btn:hover {
+            background: #b91c1c;
+        }
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
@@ -237,13 +296,32 @@
         let articles = [];
         let selectedFeedId = null;
         let searchTimeout = null;
+        let currentUser = null;
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
-            loadStats();
-            loadFeeds();
-            setupSearch();
+            checkAuthStatus();
         });
+
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/user');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        currentUser = data.user;
+                        showMainApp();
+                        loadStats();
+                        loadFeeds();
+                        setupSearch();
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('Not authenticated:', error);
+            }
+            showLoginForm();
+        }
 
         async function loadStats() {
             try {
@@ -444,12 +522,135 @@
             return div.textContent || div.innerText || '';
         }
 
-        // Allow Enter key to add feed
-        document.getElementById('feed-url').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addFeed();
+        function showLoginForm() {
+            document.body.innerHTML = `
+                <div class="login-container">
+                    <div class="login-form">
+                        <h1 class="login-title">📰 MyFeed</h1>
+                        <form onsubmit="login(event)">
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input type="text" id="username" name="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password" id="password" name="password" required>
+                            </div>
+                            <button type="submit" class="btn">Login</button>
+                        </form>
+                        <div id="login-error" style="display: none; margin-top: 15px;" class="error"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showMainApp() {
+            document.body.innerHTML = `
+                <div class="header">
+                    <div class="header-content">
+                        <div class="logo">📰 MyFeed</div>
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <div class="stats" id="stats-display">Loading...</div>
+                            <div class="user-info">
+                                <span>Welcome, ${currentUser.username}</span>
+                                <button class="logout-btn" onclick="logout()">Logout</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container">
+                    <div class="sidebar">
+                        <div class="add-feed-form">
+                            <h3 style="margin-top: 0;">Add Feed</h3>
+                            <input type="url" id="feed-url" placeholder="https://example.com/feed.xml" />
+                            <button class="btn" onclick="addFeed()">Add Feed</button>
+                        </div>
+
+                        <div>
+                            <h3>Feeds</h3>
+                            <ul class="feed-list" id="feed-list">
+                                <li class="loading">Loading feeds...</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="main-content">
+                        <input type="text" class="search-box" id="search-box" placeholder="Search articles..." />
+                        
+                        <div class="article-list" id="article-list">
+                            <div class="loading">Select a feed to view articles</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Re-attach event listeners
+            setupSearch();
+            document.getElementById('feed-url').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addFeed();
+                }
+            });
+        }
+
+        async function login(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('login-error');
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentUser = data.user;
+                    showMainApp();
+                    loadStats();
+                    loadFeeds();
+                } else {
+                    errorDiv.textContent = data.error || 'Login failed';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Network error. Please try again.';
+                errorDiv.style.display = 'block';
             }
-        });
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+
+            currentUser = null;
+            showLoginForm();
+        }
+
+        // Allow Enter key to add feed
+        function setupFeedFormListener() {
+            const feedUrl = document.getElementById('feed-url');
+            if (feedUrl) {
+                feedUrl.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        addFeed();
+                    }
+                });
+            }
+        }
     </script>
 </body>
 </html>

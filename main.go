@@ -5,6 +5,7 @@ import (
 	"log"
 	"myfeed/database"
 	"myfeed/handlers"
+	"myfeed/middleware"
 	"myfeed/services"
 	"net/http"
 	"os"
@@ -31,8 +32,15 @@ func main() {
 	// Initialize services
 	feedService := services.NewFeedService(db)
 	articleService := services.NewArticleService(db)
+	authService := services.NewAuthService(db)
 
-	// Initialize handlers
+	// Ensure default admin user exists
+	if err := authService.EnsureDefaultAdmin(); err != nil {
+		log.Printf("Warning: Failed to ensure default admin: %v", err)
+	}
+
+	// Initialize middleware and handlers
+	authMiddleware := middleware.NewAuthMiddleware(authService)
 	feedHandlers := handlers.NewFeedHandlers(feedService, articleService)
 	articleHandlers := handlers.NewArticleHandlers(articleService)
 
@@ -42,30 +50,43 @@ func main() {
 	// API routes
 	api := r.PathPrefix("/api").Subrouter()
 	
+	// Public routes (no authentication required)
+	public := api.PathPrefix("").Subrouter()
+	
 	// Health check
-	api.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	public.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, `{"status": "ok", "message": "MyFeed is running", "timestamp": "%s"}`, time.Now().Format(time.RFC3339))
 	}).Methods("GET")
 
+	// Authentication routes
+	auth := public.PathPrefix("/auth").Subrouter()
+	auth.HandleFunc("/login", authMiddleware.Login).Methods("POST")
+	auth.HandleFunc("/logout", authMiddleware.Logout).Methods("POST")
+	auth.HandleFunc("/user", authMiddleware.GetCurrentUser).Methods("GET")
+
+	// Protected routes (authentication required)
+	protected := api.PathPrefix("").Subrouter()
+	protected.Use(authMiddleware.RequireAuth)
+
 	// Stats
-	api.HandleFunc("/stats", feedHandlers.GetStats).Methods("GET")
+	protected.HandleFunc("/stats", feedHandlers.GetStats).Methods("GET")
 
 	// Feed routes
-	api.HandleFunc("/feeds", feedHandlers.GetFeeds).Methods("GET")
-	api.HandleFunc("/feeds", feedHandlers.AddFeed).Methods("POST")
-	api.HandleFunc("/feeds/{id:[0-9]+}", feedHandlers.GetFeed).Methods("GET")
-	api.HandleFunc("/feeds/{id:[0-9]+}", feedHandlers.DeleteFeed).Methods("DELETE")
-	api.HandleFunc("/feeds/{id:[0-9]+}/refresh", feedHandlers.RefreshFeed).Methods("POST")
+	protected.HandleFunc("/feeds", feedHandlers.GetFeeds).Methods("GET")
+	protected.HandleFunc("/feeds", feedHandlers.AddFeed).Methods("POST")
+	protected.HandleFunc("/feeds/{id:[0-9]+}", feedHandlers.GetFeed).Methods("GET")
+	protected.HandleFunc("/feeds/{id:[0-9]+}", feedHandlers.DeleteFeed).Methods("DELETE")
+	protected.HandleFunc("/feeds/{id:[0-9]+}/refresh", feedHandlers.RefreshFeed).Methods("POST")
 
 	// Article routes
-	api.HandleFunc("/articles", articleHandlers.GetArticles).Methods("GET")
-	api.HandleFunc("/articles/{id:[0-9]+}", articleHandlers.GetArticle).Methods("GET")
-	api.HandleFunc("/articles/{id:[0-9]+}/read", articleHandlers.MarkAsRead).Methods("PUT")
-	api.HandleFunc("/articles/{id:[0-9]+}/save", articleHandlers.MarkAsSaved).Methods("PUT")
-	api.HandleFunc("/articles/mark-all-read", articleHandlers.MarkAllAsRead).Methods("POST")
-	api.HandleFunc("/articles/search", articleHandlers.SearchArticles).Methods("GET")
+	protected.HandleFunc("/articles", articleHandlers.GetArticles).Methods("GET")
+	protected.HandleFunc("/articles/{id:[0-9]+}", articleHandlers.GetArticle).Methods("GET")
+	protected.HandleFunc("/articles/{id:[0-9]+}/read", articleHandlers.MarkAsRead).Methods("PUT")
+	protected.HandleFunc("/articles/{id:[0-9]+}/save", articleHandlers.MarkAsSaved).Methods("PUT")
+	protected.HandleFunc("/articles/mark-all-read", articleHandlers.MarkAllAsRead).Methods("POST")
+	protected.HandleFunc("/articles/search", articleHandlers.SearchArticles).Methods("GET")
 
 	// Static files and frontend
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
@@ -82,14 +103,14 @@ func main() {
 	})
 
 	// Setup background jobs
-	setupCronJobs(feedService, articleService)
+	setupCronJobs(feedService, articleService, authService)
 
 	fmt.Printf("MyFeed server starting on port %s\n", port)
 	fmt.Println("Database initialized and ready")
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }
 
-func setupCronJobs(feedService *services.FeedService, articleService *services.ArticleService) {
+func setupCronJobs(feedService *services.FeedService, articleService *services.ArticleService, authService *services.AuthService) {
 	c := cron.New()
 
 	// Refresh all feeds every 15 minutes
@@ -115,6 +136,14 @@ func setupCronJobs(feedService *services.FeedService, articleService *services.A
 			log.Printf("Failed to cleanup articles: %v", err)
 		} else {
 			log.Println("Article cleanup completed")
+		}
+	})
+
+	// Cleanup expired sessions every hour
+	c.AddFunc("0 * * * *", func() {
+		err := authService.CleanupExpiredSessions()
+		if err != nil {
+			log.Printf("Failed to cleanup expired sessions: %v", err)
 		}
 	})
 
