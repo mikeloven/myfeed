@@ -503,12 +503,14 @@
             }
 
             feedList.innerHTML = feeds.map(feed => `
-                <li class="feed-item ${selectedFeedId === feed.id ? 'active' : ''}" 
-                    onclick="selectFeed(${feed.id})">
-                    <div>
+                <li class="feed-item ${selectedFeedId === feed.id ? 'active' : ''}">
+                    <div onclick="selectFeed(${feed.id})" style="flex: 1; cursor: pointer;">
                         <div class="feed-title">${escapeHtml(feed.title)}</div>
                     </div>
-                    <div class="feed-health ${feed.health}"></div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <button class="btn-sm" onclick="markFeedAsRead(${feed.id})" title="Mark all articles in this feed as read" style="background: var(--accent-color); color: white; border: none; padding: 2px 6px; font-size: 10px;">✓</button>
+                        <div class="feed-health ${feed.health}"></div>
+                    </div>
                 </li>
             `).join('');
         }
@@ -581,10 +583,20 @@
 
         function renderArticles() {
             const articleList = document.getElementById('article-list');
+            const articleCount = document.getElementById('article-count');
             
             if (articles.length === 0) {
                 articleList.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No articles found</div>';
+                if (articleCount) {
+                    articleCount.textContent = 'No articles';
+                }
                 return;
+            }
+
+            // Update article count
+            const unreadCount = articles.filter(a => !a.read).length;
+            if (articleCount) {
+                articleCount.textContent = `${articles.length} articles • ${unreadCount} unread`;
             }
 
             articleList.innerHTML = articles.map(article => `
@@ -616,6 +628,57 @@
             
             // Open in new tab
             window.open(url, '_blank');
+        }
+
+        // Mark all as read functions
+        async function markFeedAsRead(feedId) {
+            try {
+                const response = await fetch(`/api/articles/mark-all-read?feed_id=${feedId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess('All articles in feed marked as read');
+                    loadArticles(); // Reload current articles
+                    loadStats(); // Update stats
+                } else {
+                    showError(data.error || 'Failed to mark articles as read');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        async function markAllAsRead() {
+            if (!confirm('Mark all articles as read? This cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/articles/mark-all-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess('All articles marked as read');
+                    loadArticles(); // Reload current articles  
+                    loadStats(); // Update stats
+                } else {
+                    showError(data.error || 'Failed to mark all articles as read');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            }
         }
 
         function setupSearch() {
@@ -729,6 +792,15 @@
 
                     <div class="main-content">
                         <input type="text" class="search-box" id="search-box" placeholder="Search articles..." />
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-size: 0.9rem; color: var(--text-secondary);" id="article-count">
+                                Loading articles...
+                            </div>
+                            <button class="btn-sm" onclick="markAllAsRead()" style="background: #059669; color: white;">
+                                Mark All Read
+                            </button>
+                        </div>
                         
                         <div class="article-list" id="article-list">
                             <div class="loading">Select a feed to view articles</div>
