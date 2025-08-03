@@ -326,6 +326,14 @@
         async function loadStats() {
             try {
                 const response = await fetch('/api/stats');
+                
+                if (response.status === 401) {
+                    // Not authenticated, redirect to login
+                    currentUser = null;
+                    showLoginForm();
+                    return;
+                }
+                
                 const data = await response.json();
                 if (data.success) {
                     const stats = data.data;
@@ -340,10 +348,18 @@
         async function loadFeeds() {
             try {
                 const response = await fetch('/api/feeds');
+                
+                if (response.status === 401) {
+                    // Not authenticated, redirect to login
+                    currentUser = null;
+                    showLoginForm();
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 if (data.success) {
-                    feeds = data.data;
+                    feeds = data.data || [];
                     renderFeeds();
                 } else {
                     showError('Failed to load feeds');
@@ -356,7 +372,7 @@
         function renderFeeds() {
             const feedList = document.getElementById('feed-list');
             
-            if (feeds.length === 0) {
+            if (!feeds || feeds.length === 0) {
                 feedList.innerHTML = '<li style="text-align: center; color: #666;">No feeds yet. Add one above!</li>';
                 return;
             }
