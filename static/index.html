@@ -11,131 +11,445 @@
             padding: 0;
             background: #f5f5f5;
             color: #333;
+            line-height: 1.6;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            text-align: center;
-        }
-        .logo {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 20px;
-        }
-        .subtitle {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 40px;
-        }
-        .card {
+        .header {
             background: white;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin: 20px 0;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .status {
-            color: #10b981;
-            font-weight: 600;
-        }
-        .coming-soon {
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
-            border-radius: 6px;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .api-status {
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 10px 0;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 4px;
         }
-        button {
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        .sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .main-content {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .add-feed-form {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .add-feed-form input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        .btn {
             background: #2563eb;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 16px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
+            width: 100%;
         }
-        button:hover {
+        .btn:hover {
             background: #1d4ed8;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            width: auto;
+        }
+        .feed-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .feed-item {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .feed-item:hover {
+            background: #f3f4f6;
+        }
+        .feed-item.active {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .feed-title {
+            font-weight: 500;
+            margin: 0;
+        }
+        .feed-health {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+        .feed-health.healthy { background: #10b981; }
+        .feed-health.warning { background: #f59e0b; }
+        .feed-health.error { background: #ef4444; }
+        .article-list {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .article-item {
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            cursor: pointer;
+        }
+        .article-item:hover {
+            background: #f9fafb;
+        }
+        .article-item.read {
+            opacity: 0.6;
+        }
+        .article-title {
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+        }
+        .article-meta {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .article-excerpt {
+            color: #374151;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+            .header-content {
+                padding: 0 10px;
+            }
+            .stats {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">📰 MyFeed</div>
-        <div class="subtitle">Zero-Maintenance RSS Reader</div>
-        
-        <div class="card">
-            <h2>🚀 Deployment Successful!</h2>
-            <p class="status">Your MyFeed placeholder is now running on DigitalOcean</p>
-            
-            <div class="coming-soon">
-                <strong>⚠️ Coming Soon:</strong> Full RSS feed functionality is currently under development. 
-                This is a placeholder deployment to establish the deployment pipeline.
-            </div>
-            
-            <h3>Planned Features:</h3>
-            <ul style="text-align: left; max-width: 400px; margin: 0 auto;">
-                <li>RSS/Atom feed subscription</li>
-                <li>Feed organization with folders</li>
-                <li>Multiple reading views</li>
-                <li>Full-text search</li>
-                <li>PWA capabilities</li>
-                <li>Dark/light themes</li>
-                <li>OPML import/export</li>
-            </ul>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">📰 MyFeed</div>
+            <div class="stats" id="stats-display">Loading...</div>
         </div>
-        
-        <div class="card">
-            <h3>API Status</h3>
-            <div class="api-status">
-                <span>Health Check:</span>
-                <button onclick="checkHealth()">Test /api/health</button>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="add-feed-form">
+                <h3 style="margin-top: 0;">Add Feed</h3>
+                <input type="url" id="feed-url" placeholder="https://example.com/feed.xml" />
+                <button class="btn" onclick="addFeed()">Add Feed</button>
             </div>
-            <div class="api-status">
-                <span>Feeds API:</span>
-                <button onclick="checkFeeds()">Test /api/feeds</button>
+
+            <div>
+                <h3>Feeds</h3>
+                <ul class="feed-list" id="feed-list">
+                    <li class="loading">Loading feeds...</li>
+                </ul>
             </div>
-            <div id="api-result" style="margin-top: 15px; padding: 10px; background: #f1f5f9; border-radius: 4px; display: none;"></div>
+        </div>
+
+        <div class="main-content">
+            <input type="text" class="search-box" id="search-box" placeholder="Search articles..." />
+            
+            <div class="article-list" id="article-list">
+                <div class="loading">Select a feed to view articles</div>
+            </div>
         </div>
     </div>
 
     <script>
-        async function checkHealth() {
+        let feeds = [];
+        let articles = [];
+        let selectedFeedId = null;
+        let searchTimeout = null;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadFeeds();
+            setupSearch();
+        });
+
+        async function loadStats() {
             try {
-                const response = await fetch('/api/health');
+                const response = await fetch('/api/stats');
                 const data = await response.json();
-                showResult('Health Check', data);
+                if (data.success) {
+                    const stats = data.data;
+                    document.getElementById('stats-display').innerHTML = 
+                        `${stats.total_feeds} feeds • ${stats.unread_articles} unread • ${stats.saved_articles} saved`;
+                }
             } catch (error) {
-                showResult('Health Check', {error: error.message});
+                console.error('Failed to load stats:', error);
             }
         }
 
-        async function checkFeeds() {
+        async function loadFeeds() {
             try {
                 const response = await fetch('/api/feeds');
                 const data = await response.json();
-                showResult('Feeds API', data);
+                
+                if (data.success) {
+                    feeds = data.data;
+                    renderFeeds();
+                } else {
+                    showError('Failed to load feeds');
+                }
             } catch (error) {
-                showResult('Feeds API', {error: error.message});
+                showError('Failed to load feeds: ' + error.message);
             }
         }
 
-        function showResult(endpoint, data) {
-            const resultDiv = document.getElementById('api-result');
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = `<strong>${endpoint} Response:</strong><br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        function renderFeeds() {
+            const feedList = document.getElementById('feed-list');
+            
+            if (feeds.length === 0) {
+                feedList.innerHTML = '<li style="text-align: center; color: #666;">No feeds yet. Add one above!</li>';
+                return;
+            }
+
+            feedList.innerHTML = feeds.map(feed => `
+                <li class="feed-item ${selectedFeedId === feed.id ? 'active' : ''}" 
+                    onclick="selectFeed(${feed.id})">
+                    <div>
+                        <div class="feed-title">${escapeHtml(feed.title)}</div>
+                    </div>
+                    <div class="feed-health ${feed.health}"></div>
+                </li>
+            `).join('');
         }
+
+        async function addFeed() {
+            const urlInput = document.getElementById('feed-url');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showError('Please enter a feed URL');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/feeds', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    urlInput.value = '';
+                    showSuccess('Feed added successfully!');
+                    loadFeeds();
+                    loadStats();
+                } else {
+                    showError(data.error || 'Failed to add feed');
+                }
+            } catch (error) {
+                showError('Failed to add feed: ' + error.message);
+            }
+        }
+
+        async function selectFeed(feedId) {
+            selectedFeedId = feedId;
+            renderFeeds();
+            loadArticles();
+        }
+
+        async function loadArticles(searchQuery = '') {
+            const articleList = document.getElementById('article-list');
+            articleList.innerHTML = '<div class="loading">Loading articles...</div>';
+
+            try {
+                let url = '/api/articles?limit=50';
+                if (selectedFeedId) {
+                    url += `&feed_id=${selectedFeedId}`;
+                }
+                if (searchQuery) {
+                    url = `/api/articles/search?q=${encodeURIComponent(searchQuery)}&limit=50`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success) {
+                    articles = data.data;
+                    renderArticles();
+                } else {
+                    articleList.innerHTML = '<div class="error">Failed to load articles</div>';
+                }
+            } catch (error) {
+                articleList.innerHTML = '<div class="error">Failed to load articles: ' + error.message + '</div>';
+            }
+        }
+
+        function renderArticles() {
+            const articleList = document.getElementById('article-list');
+            
+            if (articles.length === 0) {
+                articleList.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No articles found</div>';
+                return;
+            }
+
+            articleList.innerHTML = articles.map(article => `
+                <div class="article-item ${article.read ? 'read' : ''}" onclick="openArticle('${article.url}', ${article.id})">
+                    <div class="article-title">${escapeHtml(article.title)}</div>
+                    <div class="article-meta">
+                        ${new Date(article.published_at).toLocaleDateString()} 
+                        ${article.author ? '• ' + escapeHtml(article.author) : ''}
+                    </div>
+                    <div class="article-excerpt">${escapeHtml(stripHtml(article.content || '').substring(0, 200))}...</div>
+                </div>
+            `).join('');
+        }
+
+        async function openArticle(url, articleId) {
+            // Mark as read
+            try {
+                await fetch(`/api/articles/${articleId}/read`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ read: true })
+                });
+                loadStats();
+            } catch (error) {
+                console.error('Failed to mark article as read:', error);
+            }
+            
+            // Open in new tab
+            window.open(url, '_blank');
+        }
+
+        function setupSearch() {
+            const searchBox = document.getElementById('search-box');
+            searchBox.addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const query = e.target.value.trim();
+                    if (query) {
+                        selectedFeedId = null;
+                        renderFeeds();
+                        loadArticles(query);
+                    } else if (selectedFeedId) {
+                        loadArticles();
+                    }
+                }, 300);
+            });
+        }
+
+        function showError(message) {
+            const error = document.createElement('div');
+            error.className = 'error';
+            error.textContent = message;
+            document.body.appendChild(error);
+            setTimeout(() => error.remove(), 5000);
+        }
+
+        function showSuccess(message) {
+            const success = document.createElement('div');
+            success.className = 'success';
+            success.textContent = message;
+            document.body.appendChild(success);
+            setTimeout(() => success.remove(), 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function stripHtml(html) {
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            return div.textContent || div.innerText || '';
+        }
+
+        // Allow Enter key to add feed
+        document.getElementById('feed-url').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addFeed();
+            }
+        });
     </script>
 </body>
 </html>
