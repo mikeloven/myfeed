@@ -115,6 +115,7 @@ services:
 - 🏷️ Basic tagging system
 - 📊 Reading statistics and trends
 - 🔗 Related article suggestions
+- 📖 In-app article preview (Feedly-style content extraction)
 
 ### **Sharing & Export**
 - 📧 Email sharing

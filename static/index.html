@@ -712,6 +712,13 @@
                             <button class="btn" onclick="addFeed()">Add Feed</button>
                         </div>
 
+                        <div class="add-feed-form">
+                            <h3 style="margin-top: 0;">Import/Export</h3>
+                            <input type="file" id="opml-file" accept=".opml,.xml" style="margin-bottom: 10px; font-size: 14px;" />
+                            <button class="btn" onclick="importOPML()" style="margin-bottom: 10px;">Import OPML</button>
+                            <button class="btn" onclick="exportOPML()" style="background: #059669;">Export OPML</button>
+                        </div>
+
                         <div>
                             <h3>Feeds</h3>
                             <ul class="feed-list" id="feed-list">
@@ -868,6 +875,85 @@
             const modal = document.getElementById('changePasswordModal');
             if (event.target === modal) {
                 closeChangePasswordModal();
+            }
+        }
+
+        // OPML Import/Export functions
+        async function importOPML() {
+            const fileInput = document.getElementById('opml-file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('Please select an OPML file to import');
+                return;
+            }
+
+            // Validate file type
+            if (!file.name.toLowerCase().endsWith('.opml') && !file.name.toLowerCase().endsWith('.xml')) {
+                showError('Please select a valid OPML (.opml or .xml) file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('opml_file', file);
+
+            try {
+                const response = await fetch('/api/opml/import', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess(data.message);
+                    fileInput.value = ''; // Clear the file input
+                    loadFeeds(); // Reload feeds to show imported ones
+                    loadStats(); // Update stats
+                } else {
+                    showError(data.error || 'Failed to import OPML file');
+                }
+            } catch (error) {
+                showError('Network error during import: ' + error.message);
+            }
+        }
+
+        async function exportOPML() {
+            try {
+                const response = await fetch('/api/opml/export');
+
+                if (response.ok) {
+                    // Create a blob from the response
+                    const blob = await response.blob();
+                    
+                    // Create a download link
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    
+                    // Get filename from response headers or use default
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = 'myfeed_export.opml';
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+                    
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showSuccess('OPML export downloaded successfully');
+                } else {
+                    const data = await response.json();
+                    showError(data.error || 'Failed to export OPML');
+                }
+            } catch (error) {
+                showError('Network error during export: ' + error.message);
             }
         }
 

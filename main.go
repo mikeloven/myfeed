@@ -34,6 +34,7 @@ func main() {
 	articleService := services.NewArticleService(db)
 	authService := services.NewAuthService(db)
 	folderService := services.NewFolderService(db)
+	opmlService := services.NewOPMLService(db, feedService, folderService)
 
 	// Ensure default admin user exists
 	if err := authService.EnsureDefaultAdmin(); err != nil {
@@ -45,6 +46,7 @@ func main() {
 	feedHandlers := handlers.NewFeedHandlers(feedService, articleService)
 	articleHandlers := handlers.NewArticleHandlers(articleService)
 	folderHandlers := handlers.NewFolderHandlers(folderService, feedService)
+	opmlHandlers := handlers.NewOPMLHandlers(opmlService)
 
 	// Setup routes
 	r := mux.NewRouter()
@@ -100,6 +102,10 @@ func main() {
 	protected.HandleFunc("/folders/{id:[0-9]+}", folderHandlers.UpdateFolder).Methods("PUT")
 	protected.HandleFunc("/folders/{id:[0-9]+}", folderHandlers.DeleteFolder).Methods("DELETE")
 	protected.HandleFunc("/folders/move-feeds", folderHandlers.MoveFeedsToFolder).Methods("POST")
+
+	// OPML Import/Export routes
+	protected.HandleFunc("/opml/import", opmlHandlers.ImportOPML).Methods("POST")
+	protected.HandleFunc("/opml/export", opmlHandlers.ExportOPML).Methods("GET")
 
 	// Static files and frontend
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
