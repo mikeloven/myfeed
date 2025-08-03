@@ -26,6 +26,22 @@ This application is configured for deployment on DigitalOcean App Platform with 
 - **Database**: Will use SQLite
 - **Deployment**: DigitalOcean App Platform
 
+## Security
+
+This is a **public repository**. Security measures in place:
+
+- Comprehensive `.gitignore` to prevent accidental commit of sensitive files
+- No hardcoded secrets, API keys, or credentials in source code
+- Environment variables used for configuration
+- Database files and data directories excluded from git
+
+⚠️ **Never commit:**
+- API keys or access tokens
+- Database credentials
+- SSL certificates or private keys
+- Environment files (.env, config files with secrets)
+- User data or database files
+
 ## Roadmap
 
 See [PROJECT_PLAN.md](PROJECT_PLAN.md) for detailed feature planning and implementation phases.

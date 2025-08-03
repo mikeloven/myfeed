@@ -26,7 +26,28 @@ data/
 
 # Environment files
 .env
+.env.*
 .env.local
+.env.production
+.env.development
+
+# Configuration files with secrets
+config.yaml
+config.json
+secrets.yaml
+secrets.json
+
+# API keys and credentials
+*.key
+*.pem
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# DigitalOcean and cloud credentials
+doctl/
+.do/
 
 # IDE
 .vscode/
