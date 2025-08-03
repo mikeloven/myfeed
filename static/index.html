@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFeed - RSS Reader</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 20px;
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .status {
+            color: #10b981;
+            font-weight: 600;
+        }
+        .coming-soon {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .api-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">📰 MyFeed</div>
+        <div class="subtitle">Zero-Maintenance RSS Reader</div>
+        
+        <div class="card">
+            <h2>🚀 Deployment Successful!</h2>
+            <p class="status">Your MyFeed placeholder is now running on DigitalOcean</p>
+            
+            <div class="coming-soon">
+                <strong>⚠️ Coming Soon:</strong> Full RSS feed functionality is currently under development. 
+                This is a placeholder deployment to establish the deployment pipeline.
+            </div>
+            
+            <h3>Planned Features:</h3>
+            <ul style="text-align: left; max-width: 400px; margin: 0 auto;">
+                <li>RSS/Atom feed subscription</li>
+                <li>Feed organization with folders</li>
+                <li>Multiple reading views</li>
+                <li>Full-text search</li>
+                <li>PWA capabilities</li>
+                <li>Dark/light themes</li>
+                <li>OPML import/export</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <h3>API Status</h3>
+            <div class="api-status">
+                <span>Health Check:</span>
+                <button onclick="checkHealth()">Test /api/health</button>
+            </div>
+            <div class="api-status">
+                <span>Feeds API:</span>
+                <button onclick="checkFeeds()">Test /api/feeds</button>
+            </div>
+            <div id="api-result" style="margin-top: 15px; padding: 10px; background: #f1f5f9; border-radius: 4px; display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function checkHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                showResult('Health Check', data);
+            } catch (error) {
+                showResult('Health Check', {error: error.message});
+            }
+        }
+
+        async function checkFeeds() {
+            try {
+                const response = await fetch('/api/feeds');
+                const data = await response.json();
+                showResult('Feeds API', data);
+            } catch (error) {
+                showResult('Feeds API', {error: error.message});
+            }
+        }
+
+        function showResult(endpoint, data) {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<strong>${endpoint} Response:</strong><br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+    </script>
+</body>
+</html>
