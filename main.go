@@ -70,6 +70,29 @@ func main() {
 		}
 	}).Methods("GET")
 
+	// Temporary debug endpoint to check database status
+	public.HandleFunc("/debug", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		
+		// Check user count
+		userCount, err := authService.GetUserCount()
+		if err != nil {
+			fmt.Fprintf(w, `{"error": "Failed to get user count: %v"}`, err)
+			return
+		}
+		
+		// Try to get admin user
+		adminUser, err := authService.GetUserByUsername("admin")
+		adminExists := err == nil && adminUser != nil
+		
+		// Check database connection
+		dbErr := db.Ping()
+		dbConnected := dbErr == nil
+		
+		fmt.Fprintf(w, `{"user_count": %d, "admin_exists": %t, "db_connected": %t, "db_error": "%v", "admin_error": "%v"}`, 
+			userCount, adminExists, dbConnected, dbErr, err)
+	}).Methods("GET")
+
 	// Authentication routes
 	auth := public.PathPrefix("/auth").Subrouter()
 	auth.HandleFunc("/login", authMiddleware.Login).Methods("POST")
