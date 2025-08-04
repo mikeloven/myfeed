@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -13,6 +14,7 @@ import (
 
 type DB struct {
 	*sql.DB
+	isPostgreSQL bool
 }
 
 func NewDatabase() (*DB, error) {
@@ -39,7 +41,7 @@ func newPostgreSQLDatabase(databaseURL string) (*DB, error) {
 		return nil, fmt.Errorf("failed to ping PostgreSQL database: %v", err)
 	}
 
-	database := &DB{db}
+	database := &DB{db, true}
 	if err := database.createPostgreSQLTables(); err != nil {
 		return nil, fmt.Errorf("failed to create PostgreSQL tables: %v", err)
 	}
@@ -66,7 +68,7 @@ func newSQLiteDatabase() (*DB, error) {
 		return nil, fmt.Errorf("failed to ping SQLite database: %v", err)
 	}
 
-	database := &DB{db}
+	database := &DB{db, false}
 	if err := database.createSQLiteTables(); err != nil {
 		return nil, fmt.Errorf("failed to create SQLite tables: %v", err)
 	}
@@ -163,7 +165,7 @@ func (db *DB) createSQLiteTables() error {
 		('refresh_interval', '15m');
 	`
 
-	_, err := db.Exec(schema)
+	_, err := db.DB.Exec(schema)
 	return err
 }
 
@@ -250,6 +252,39 @@ func (db *DB) createPostgreSQLTables() error {
 	ON CONFLICT (key) DO NOTHING;
 	`
 
-	_, err := db.Exec(schema)
+	_, err := db.DB.Exec(schema)
 	return err
+}
+
+// convertQuery converts SQLite-style queries (?) to PostgreSQL-style ($1, $2, etc.)
+func (db *DB) convertQuery(query string) string {
+	if !db.isPostgreSQL {
+		return query
+	}
+	
+	result := query
+	placeholder := 1
+	for strings.Contains(result, "?") {
+		result = strings.Replace(result, "?", fmt.Sprintf("$%d", placeholder), 1)
+		placeholder++
+	}
+	return result
+}
+
+// QueryRow executes a query that returns at most one row with database-agnostic placeholders
+func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
+	convertedQuery := db.convertQuery(query)
+	return db.DB.QueryRow(convertedQuery, args...)
+}
+
+// Query executes a query that returns rows with database-agnostic placeholders
+func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	convertedQuery := db.convertQuery(query)
+	return db.DB.Query(convertedQuery, args...)
+}
+
+// Exec executes a query that doesn't return rows with database-agnostic placeholders
+func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	convertedQuery := db.convertQuery(query)
+	return db.DB.Exec(convertedQuery, args...)
 }
