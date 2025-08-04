@@ -61,7 +61,13 @@ func main() {
 	public.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"status": "ok", "message": "MyFeed is running", "timestamp": "%s"}`, time.Now().Format(time.RFC3339))
+		
+		debugMode := os.Getenv("DISABLE_AUTH") == "true"
+		if debugMode {
+			fmt.Fprintf(w, `{"status": "ok", "message": "MyFeed is running", "timestamp": "%s", "debug_mode": true}`, time.Now().Format(time.RFC3339))
+		} else {
+			fmt.Fprintf(w, `{"status": "ok", "message": "MyFeed is running", "timestamp": "%s", "debug_mode": false}`, time.Now().Format(time.RFC3339))
+		}
 	}).Methods("GET")
 
 	// Authentication routes

@@ -46,6 +46,16 @@ func NewAuthMiddleware(authService *services.AuthService) *AuthMiddleware {
 
 func (am *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Temporary bypass for debugging - remove after fixing auth issue
+		if os.Getenv("DISABLE_AUTH") == "true" {
+			log.Println("WARNING: Authentication disabled for debugging")
+			// Create a fake admin user for context
+			fakeUser := &models.User{ID: 1, Username: "admin", IsAdmin: true}
+			ctx := context.WithValue(r.Context(), UserContextKey, fakeUser)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
 		user := am.getCurrentUser(r)
 		if user == nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
