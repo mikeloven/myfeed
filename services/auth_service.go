@@ -198,8 +198,11 @@ func (as *AuthService) EnsureDefaultAdmin() error {
 	// Check if any users exist
 	count, err := as.GetUserCount()
 	if err != nil {
+		log.Printf("ERROR: Failed to get user count: %v", err)
 		return err
 	}
+
+	log.Printf("INFO: Current user count: %d", count)
 
 	// If no users exist, create default admin from environment
 	if count == 0 {
@@ -214,12 +217,24 @@ func (as *AuthService) EnsureDefaultAdmin() error {
 			log.Println("WARNING: Using default admin password. Please change it!")
 		}
 
+		log.Printf("INFO: Creating default admin user '%s' because no users exist", username)
 		_, err := as.CreateUser(username, password, true)
 		if err != nil {
+			log.Printf("ERROR: Failed to create default admin: %v", err)
 			return fmt.Errorf("failed to create default admin: %v", err)
 		}
 		
-		log.Printf("Created default admin user: %s", username)
+		log.Printf("SUCCESS: Created default admin user: %s", username)
+	} else {
+		log.Printf("INFO: Users exist (%d total), skipping default admin creation", count)
+		
+		// Check if admin user exists specifically
+		adminUser, err := as.GetUserByUsername("admin")
+		if err != nil {
+			log.Printf("WARNING: Could not find admin user: %v", err)
+		} else {
+			log.Printf("INFO: Admin user exists with ID: %d", adminUser.ID)
+		}
 	}
 
 	return nil

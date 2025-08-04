@@ -18,10 +18,12 @@ type DB struct {
 func NewDatabase() (*DB, error) {
 	// Check if PostgreSQL connection string is provided
 	if pgURL := os.Getenv("DATABASE_URL"); pgURL != "" {
+		log.Println("INFO: DATABASE_URL found, attempting PostgreSQL connection...")
 		return newPostgreSQLDatabase(pgURL)
 	}
 	
 	// Fall back to SQLite for development
+	log.Println("INFO: No DATABASE_URL found, using SQLite for development...")
 	return newSQLiteDatabase()
 }
 
