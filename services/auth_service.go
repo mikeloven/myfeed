@@ -203,38 +203,48 @@ func (as *AuthService) EnsureDefaultAdmin() error {
 	}
 
 	log.Printf("INFO: Current user count: %d", count)
+	
+	username := os.Getenv("ADMIN_USERNAME")
+	password := os.Getenv("ADMIN_PASSWORD")
+	
+	if username == "" {
+		username = "admin"
+	}
+	if password == "" {
+		password = "admin123" // Default password - should be changed
+		log.Println("WARNING: Using default admin password. Please change it!")
+	}
 
-	// If no users exist, create default admin from environment
-	if count == 0 {
-		username := os.Getenv("ADMIN_USERNAME")
-		password := os.Getenv("ADMIN_PASSWORD")
-		
-		if username == "" {
-			username = "admin"
-		}
-		if password == "" {
-			password = "admin123" // Default password - should be changed
-			log.Println("WARNING: Using default admin password. Please change it!")
-		}
-
-		log.Printf("INFO: Creating default admin user '%s' because no users exist", username)
+	// Always check if admin user exists and ensure it has the correct password
+	adminUser, err := as.GetUserByUsername(username)
+	if err != nil {
+		// Admin user doesn't exist, create it
+		log.Printf("INFO: Creating admin user '%s' because it doesn't exist", username)
 		_, err := as.CreateUser(username, password, true)
 		if err != nil {
-			log.Printf("ERROR: Failed to create default admin: %v", err)
-			return fmt.Errorf("failed to create default admin: %v", err)
+			log.Printf("ERROR: Failed to create admin user: %v", err)
+			return fmt.Errorf("failed to create admin user: %v", err)
 		}
-		
-		log.Printf("SUCCESS: Created default admin user: %s", username)
+		log.Printf("SUCCESS: Created admin user: %s", username)
 	} else {
-		log.Printf("INFO: Users exist (%d total), skipping default admin creation", count)
+		// Admin user exists, ensure it has the current password from environment
+		log.Printf("INFO: Admin user exists with ID: %d, ensuring password is current", adminUser.ID)
 		
-		// Check if admin user exists specifically
-		adminUser, err := as.GetUserByUsername("admin")
+		// Hash the current environment password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
-			log.Printf("WARNING: Could not find admin user: %v", err)
-		} else {
-			log.Printf("INFO: Admin user exists with ID: %d", adminUser.ID)
+			log.Printf("ERROR: Failed to hash password: %v", err)
+			return fmt.Errorf("failed to hash password: %v", err)
 		}
+
+		// Update the password in database
+		query := `UPDATE users SET password = ? WHERE username = ?`
+		_, err = as.db.Exec(query, string(hashedPassword), username)
+		if err != nil {
+			log.Printf("ERROR: Failed to update admin password: %v", err)
+			return fmt.Errorf("failed to update admin password: %v", err)
+		}
+		log.Printf("SUCCESS: Updated admin password for user: %s", username)
 	}
 
 	return nil
