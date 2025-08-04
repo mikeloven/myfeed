@@ -14,6 +14,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/robfig/cron/v3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -92,6 +93,50 @@ func main() {
 		fmt.Fprintf(w, `{"user_count": %d, "admin_exists": %t, "db_connected": %t, "db_error": "%v", "admin_error": "%v"}`, 
 			userCount, adminExists, dbConnected, dbErr, err)
 	}).Methods("GET")
+
+	// Temporary admin reset endpoint (remove after fixing)
+	public.HandleFunc("/reset-admin", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		
+		// Force create/update admin user
+		username := os.Getenv("ADMIN_USERNAME")
+		password := os.Getenv("ADMIN_PASSWORD")
+		if username == "" {
+			username = "admin"
+		}
+		if password == "" {
+			password = "newpassword123"
+		}
+		
+		// Try to get existing admin user
+		existingUser, _ := authService.GetUserByUsername(username)
+		if existingUser != nil {
+			// User exists, force password update
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+			if err != nil {
+				fmt.Fprintf(w, `{"error": "Failed to hash password: %v"}`, err)
+				return
+			}
+			
+			query := "UPDATE users SET password = $1 WHERE username = $2"
+			_, err = db.Exec(query, string(hashedPassword), username)
+			if err != nil {
+				fmt.Fprintf(w, `{"error": "Failed to update password: %v"}`, err)
+				return
+			}
+			
+			fmt.Fprintf(w, `{"success": true, "message": "Admin password updated", "username": "%s"}`, username)
+		} else {
+			// User doesn't exist, create it
+			_, err := authService.CreateUser(username, password, true)
+			if err != nil {
+				fmt.Fprintf(w, `{"error": "Failed to create admin user: %v"}`, err)
+				return
+			}
+			
+			fmt.Fprintf(w, `{"success": true, "message": "Admin user created", "username": "%s"}`, username)
+		}
+	}).Methods("POST", "GET")
 
 	// Authentication routes
 	auth := public.PathPrefix("/auth").Subrouter()
